@@ -1,7 +1,10 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { cleanupExpiredReservations } from "@/lib/reservations";
+
+export const dynamic = "force-dynamic";
 
 // Schema for request validation
 const reserveRequestSchema = z.object({
@@ -95,6 +98,7 @@ export async function POST(request: Request) {
       return newReservation;
     });
 
+    revalidatePath("/");
     return NextResponse.json(reservation, { status: 201 });
 
   } catch (error: any) {

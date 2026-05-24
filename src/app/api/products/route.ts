@@ -32,7 +32,11 @@ export async function GET() {
       availableStock: inv.totalStock - inv.reservedStock,
     }));
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    });
   } catch (error: any) {
     console.error("Error in GET /api/products:", error);
     return NextResponse.json(

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { subscribeInventoryUpdated } from "@/lib/inventory-events";
 import { 
   Building2, 
   Package, 
@@ -38,11 +39,13 @@ export default function ProductListingPage() {
   // Key format: productId_warehouseId
   const [quantities, setQuantities] = useState<Record<string, number>>({});
 
-  const fetchProducts = async (showRefreshIndicator = false) => {
+  const fetchProducts = useCallback(async (showRefreshIndicator = false) => {
     if (showRefreshIndicator) setRefreshing(true);
     try {
       setErrorMsg(null);
-      const res = await fetch("/api/products", { cache: "no-store" });
+      const res = await fetch(`/api/products?_=${Date.now()}`, {
+        cache: "no-store",
+      });
       if (!res.ok) {
         throw new Error("Failed to fetch product inventory.");
       }
@@ -62,11 +65,18 @@ export default function ProductListingPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
+
+  // Home may stay mounted in the client router cache; refetch when inventory changes elsewhere
+  useEffect(() => {
+    return subscribeInventoryUpdated(() => {
+      fetchProducts();
+    });
+  }, [fetchProducts]);
 
   const handleQuantityChange = (productId: string, warehouseId: string, delta: number, maxStock: number) => {
     const key = `${productId}_${warehouseId}`;
@@ -115,9 +125,10 @@ export default function ProductListingPage() {
       }
 
       const reservation = await response.json();
+      await fetchProducts();
+      router.refresh();
       setSuccessMsg(`Reserved ${qty} items successfully! Redirecting...`);
-      
-      // Redirect to checkout / reservation page after a tiny delay for positive feedback
+
       setTimeout(() => {
         router.push(`/reservation/${reservation.id}`);
       }, 1000);

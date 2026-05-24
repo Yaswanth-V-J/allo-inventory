@@ -1,5 +1,8 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(
   request: Request,
@@ -84,6 +87,7 @@ export async function POST(
       return confirmed;
     });
 
+    revalidatePath("/");
     return NextResponse.json(updatedReservation);
 
   } catch (error: any) {

@@ -16,6 +16,7 @@ import {
   Sparkles
 } from "lucide-react";
 import confetti from "canvas-confetti";
+import { notifyInventoryUpdated } from "@/lib/inventory-events";
 
 interface Reservation {
   id: string;
@@ -101,6 +102,12 @@ export default function ReservationPage({ params }: PageProps) {
     return () => clearInterval(timer);
   }, [reservation, secondsLeft]);
 
+  const goToProducts = () => {
+    notifyInventoryUpdated();
+    router.refresh();
+    router.push("/");
+  };
+
   // Format timer into MM:SS
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
@@ -133,6 +140,8 @@ export default function ReservationPage({ params }: PageProps) {
 
       const updatedRes: Reservation = await res.json();
       setReservation(updatedRes);
+      notifyInventoryUpdated();
+      router.refresh();
 
       // Trigger Confetti Celebration!
       confetti({
@@ -167,7 +176,9 @@ export default function ReservationPage({ params }: PageProps) {
 
       const updatedRes: Reservation = await res.json();
       setReservation(updatedRes);
-      
+      notifyInventoryUpdated();
+      router.refresh();
+
     } catch (err: any) {
       setErrorMsg(err.message || "An unexpected error occurred during cancellation.");
     } finally {
@@ -197,7 +208,7 @@ export default function ReservationPage({ params }: PageProps) {
           <h2 className="text-xl font-bold text-rose-300">Checkout Error</h2>
           <p className="text-sm text-slate-300">{errorMsg}</p>
           <button
-            onClick={() => router.push("/")}
+            onClick={goToProducts}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl transition text-sm font-semibold border border-slate-700/50"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -214,7 +225,7 @@ export default function ReservationPage({ params }: PageProps) {
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-10 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <button
-            onClick={() => router.push("/")}
+            onClick={goToProducts}
             className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-800 rounded-xl transition text-sm font-medium border border-slate-800 text-slate-300 hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -395,7 +406,7 @@ export default function ReservationPage({ params }: PageProps) {
             {!isPending && (
               <div className="pt-4 border-t border-slate-800 flex justify-center">
                 <button
-                  onClick={() => router.push("/")}
+                  onClick={goToProducts}
                   className="px-6 h-11 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold rounded-2xl transition flex items-center gap-2 text-xs"
                 >
                   <ArrowLeft className="h-4 w-4" />
